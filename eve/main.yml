@@ -245,6 +245,7 @@ models:
         ISO_MOUNTPOINT: "/var/tmp/metalk8s"
         TEST_HOSTS_LIST: "bootstrap"
         PYTEST_FILTERS: "post and ci"
+        BRANCH: "%(prop:branch)s"
       command: >
         ssh -F ssh_config bastion --
         "cd metalk8s &&
@@ -535,6 +536,7 @@ stages:
             # TF_VAR_worker_uuid: "%(prop:worker_uuid)s"
             TF_VAR_nodes_count: "2"
             TF_VAR_bastion_enabled: "true"
+            TF_VAR_private_networks: '["control_plane", "workload_plane"]'
           haltOnFailure: true
       - ShellCommand:
           name: Check SSH config for bootstrap node
@@ -583,13 +585,6 @@ stages:
             sudo yum install -y kubectl --disablerepo=*
             --enablerepo=metalk8s-kubernetes
           workdir: build/contrib/terraform/
-      - ShellCommand:
-          name: Enable IPIP
-          env:
-            SSH_CONFIG: contrib/terraform/ssh_config
-          command: >
-            ssh -F $SSH_CONFIG bootstrap
-            'bash /home/centos/scripts/enable_ipip.sh'
       - ShellCommand:
           # FIXME: should find a cleaner way to do this (git clone may be
           # cumbersome, unless we assume the repo is public and don't use
