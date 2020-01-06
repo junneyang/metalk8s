@@ -211,6 +211,18 @@ configure_salt_minion_local_mode() {
         pillar="{'metalk8s': {'archives': '$base_dir'}}"
 }
 
+check_mountpoint() {
+    local -r script_dir=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+
+    if [[ "$script_dir" != "/srv/scality/metalk8s-@@VERSION" ]]; then
+        "${SALT_CALL}" --local --state-output=mixed --retcode-passthrough \
+            state.sls metalk8s.archives.mounted \
+            saltenv=metalk8s-@@VERSION pillarenv=metalk8s-@@VERSION
+    else
+        echo "Mountpoint is valid, nothing to do."
+    fi
+}
+
 get_salt_container() {
     local -r max_retries=10
     local salt_container='' attempts=0
@@ -327,6 +339,7 @@ main() {
     run "Installing Salt minion" install_salt_minion
     run "Installing genisoimage" install_genisoimage
     run "Configuring Salt minion to run in local mode" configure_salt_minion_local_mode
+    run "Ensure mountpoint is under /srv/scality" check_mountpoint
 
     orchestrate_bootstrap
 }
