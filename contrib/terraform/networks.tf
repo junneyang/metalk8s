@@ -63,8 +63,11 @@ locals {
 }
 
 locals {
-  # The VIP can be configured as a static IP or the number of the IP to pick
-  # from the configured subnet range (leave empty to not use a VIP)
+  # The VIP can be configured as:
+  # - a static IP
+  # - the number of the IP to pick from the configured subnet range
+  # - the special character "_", to pick any IP
+  # - empty, to not use a VIP
   control_plane_vip = (
     length(regexall("^[1-9][0-9]*$", var.control_plane_vip)) > 0
     ? cidrhost(
@@ -80,7 +83,7 @@ resource "openstack_networking_port_v2" "control_plane_vip" {
 
   fixed_ip {
     subnet_id  = local.control_plane_subnet[0].id
-    ip_address = local.control_plane_vip
+    ip_address = local.control_plane_vip == "_" ? "" : local.control_plane_vip
   }
 
   count = (
@@ -145,8 +148,11 @@ locals {
 }
 
 locals {
-  # The VIP can be configured as a static IP or the number of the IP to pick
-  # from the configured subnet range (leave empty to not use a VIP)
+  # The VIP can be configured as:
+  # - a static IP
+  # - the number of the IP to pick from the configured subnet range
+  # - the special character "_", to pick any IP
+  # - empty, to not use a VIP
   workload_plane_vip = (
     length(regexall("^[1-9][0-9]*$", var.workload_plane_vip)) > 0
     ? cidrhost(
@@ -162,7 +168,7 @@ resource "openstack_networking_port_v2" "workload_plane_vip" {
 
   fixed_ip {
     subnet_id  = local.workload_plane_subnet[0].id
-    ip_address = local.workload_plane_vip
+    ip_address = local.workload_plane_vip == "_" ? "" : local.workload_plane_vip
   }
 
   count = local.workload_plane_vip != "" ? 1 : 0
