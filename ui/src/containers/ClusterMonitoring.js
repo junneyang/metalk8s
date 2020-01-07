@@ -222,7 +222,7 @@ const ClusterMonitoring = props => {
               </TooltipContent>
             }
           >
-            <QuestionMarkIcon className="fas fa-question-circle" />
+            <QuestionMarkIcon className="fas fa-info-circle" />
           </Tooltip>
           {clusterStatus.isLoading ? <LoaderCoreUI size="small" /> : null}
         </LeftClusterStatusContainer>
