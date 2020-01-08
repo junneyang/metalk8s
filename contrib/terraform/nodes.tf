@@ -119,15 +119,15 @@ resource "null_resource" "nodes_iface_config" {
   # Configure network interfaces for private networks
   provisioner "remote-exec" {
     inline = [
-      for iface in concat(
+      for mac_address in concat(
         local.control_plane_network.enabled
-        ? [local.control_plane_network.iface]
+        ? [openstack_networking_port_v2.control_plane_nodes[count.index].mac_address]
         : [],
         local.workload_plane_network.enabled
-        ? [local.workload_plane_network.iface]
+        ? [openstack_networking_port_v2.workload_plane_nodes[count.index].mac_address]
         : [],
       ) :
-      "sudo bash scripts/network-iface-config.sh ${iface}"
+      "sudo bash scripts/network-iface-config.sh ${mac_address}"
     ]
   }
 }

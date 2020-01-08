@@ -1,14 +1,19 @@
 #!/bin/bash
 # This script needs to be replaced by a cloud-init script
 
-declare -r IFACE=$1
+declare -r MAC_ADDR=$1
 
-if [ ! -f /sys/class/net/"$IFACE"/address ]; then
-    echo "No such network interface '$IFACE'"
+if [ -z "$MAC_ADDR" ]; then
+    echo "Must provide a MAC address" >&2
     exit 1
 fi
 
-read -r MAC_ADDR < /sys/class/net/"$IFACE"/address
+IFACE=$(ip -br link | grep "$MAC_ADDR" | awk '{print $1}')
+
+if [ -z "$IFACE" ]; then
+    echo "No network interface with address: '$MAC_ADDR'" >&2
+    exit 1
+fi
 
 cat > /etc/sysconfig/network-scripts/ifcfg-"$IFACE" << EOF
 BOOTPROTO=dhcp
