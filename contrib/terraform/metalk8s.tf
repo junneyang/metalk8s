@@ -73,10 +73,10 @@ resource "null_resource" "configure_bootstrap" {
       join(" ", compact([
         "sudo env",
         local.control_plane_network.enabled
-        ? "CP_IFACE=${local.control_plane_network.iface}"
+        ? "CP_NET=${local.control_plane_subnet[0].cidr}"
         : "",
         local.workload_plane_network.enabled
-        ? "WP_IFACE=${local.workload_plane_network.iface}"
+        ? "WP_NET=${local.workload_plane_subnet[0].cidr}"
         : "",
         local.control_plane_network.enabled
         && local.control_plane_vip != ""

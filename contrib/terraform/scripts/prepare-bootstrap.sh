@@ -5,8 +5,8 @@ set -xue -o pipefail
 # Parameters
 OUTPUT_FILE="/etc/metalk8s/bootstrap.yaml"
 ARCHIVE_PATH=${ARCHIVE_PATH:-"/home/centos/metalk8s.iso"}
-CONTROL_PLANE_IFACE=${CP_IFACE:-"eth0"}
-WORKLOAD_PLANE_IFACE=${WP_IFACE:-"eth0"}
+CONTROL_PLANE_NETWORK=${CP_NET:-"10.0.0.0/8"}
+WORKLOAD_PLANE_NETWORK=${WP_NET:-"10.0.0.0/8"}
 API_SERVER_VIP=${API_SERVER_VIP:-}
 MINION_ID=${MINION_ID:-"$(hostname)"}
 SSH_IDENTITY=${SSH_IDENTITY:-}
@@ -29,31 +29,23 @@ KEEPALIVED_ENABLED=false
 [[ "$API_SERVER_VIP" ]] && KEEPALIVED_ENABLED=true
 
 # Retrieve networks info
-get_ip_netmask_from_iface() {
-  local -r iface=${1:-"eth0"}
-
-  ip -4 address show "$iface" | sed -rn 's/^\s*inet ([0-9.\/]+).*$/\1/p'
-}
-
-get_network_from_iface() {
-  local -r iface=${1:-"eth0"}
-  local NETWORK PREFIX ip_netmask
-
-  ip_netmask="$(get_ip_netmask_from_iface "$iface")"
+cidr_from_ip_netmask() {
+  local -r ip_netmask=${1:-}
+  local NETWORK PREFIX
   eval "$(ipcalc --network --prefix "$ip_netmask")"
   echo "$NETWORK/$PREFIX"
 }
 
-get_ip_from_iface() {
-  local -r iface=${1:-"eth0"}
-  local ip_netmask
-  ip_netmask="$(get_ip_netmask_from_iface "$iface")"
-  echo "${ip_netmask%/*}"
-}
+while IFS= read -r iface; do
+  ip_netmask="$(
+    ip -4 address show "$iface" | sed -rn 's/^\s*inet ([0-9.\/]+).*$/\1/p'
+  )"
 
-WORKLOAD_PLANE_NETWORK="$(get_network_from_iface "$WORKLOAD_PLANE_IFACE")"
-CONTROL_PLANE_NETWORK="$(get_network_from_iface "$CONTROL_PLANE_IFACE")"
-CONTROL_PLANE_IP="$(get_ip_from_iface "$CONTROL_PLANE_IFACE")"
+  if [ "$(cidr_from_ip_netmask "$ip_netmask")" == "$CONTROL_PLANE_NETWORK" ]; then
+    CONTROL_PLANE_IP="${ip_netmask%/*}"
+    break
+  fi
+done < <(ip -br link | grep -v 'LOOPBACK' | awk '{print $1}')
 
 # Write actual BootstrapConfiguration
 cat > "$OUTPUT_FILE" << EOF

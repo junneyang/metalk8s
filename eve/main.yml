@@ -203,6 +203,7 @@ models:
         PRODUCT_VERSION: "%(prop:metalk8s_version)s"
       command: >
         sudo env
+        CP_NET=10.100.0.0/16 WP_NET=10.100.0.0/16
         ARCHIVE_PATH="/srv/scality/metalk8s-${PRODUCT_VERSION}"
         contrib/terraform/scripts/prepare-bootstrap.sh
       haltOnFailure: true
@@ -565,6 +566,7 @@ stages:
           command: >
             ssh -F ssh_config bootstrap
             sudo env
+            CP_NET=192.168.1.0/24 WP_NET=192.168.2.0/24
             ARCHIVE_PATH=/home/centos/metalk8s.iso
             MINION_ID=bootstrap
             SSH_IDENTITY=/home/centos/.ssh/bootstrap
